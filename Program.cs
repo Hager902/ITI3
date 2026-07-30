@@ -192,6 +192,22 @@ foreach (var name in myTopNames)
 //It's DEFERRED,  because Deferred execution means you filter IN SQL which is fast and efficient
 
 
+//Tables created Students, Courses, Instructors
+//Gpa column type Float(EF chose floating point for double)
+//FullName column type: NVARCHAR(MAX) for string
+//FullName is NOT nullable i added Email { get; set; } with ? to make it nullable.
+//Down() would drop the three tables if you ran RollbackMigration
+
+
+//Add Migration creates the migration file but does noy apply it
+//Database still doesn't exist until Update Database runs
+//This proves Add-Migration only generates code it doesn't touch the database
+
+// Auto increment Primary Key syntax (EF uses different constraints)
+// Column nullability (EF infers from nullable reference types)
+
+
+
 Console.WriteLine("Step 1: Add Migration InitialCreate");
 Console.WriteLine("Step 2: Read migration file");
 Console.WriteLine("Step 3: Update Database");
@@ -200,11 +216,11 @@ Console.WriteLine();
 
 
 Console.WriteLine("Property added to Student (Email)");
-Console.WriteLine("Add-Migration AddEmailToStudent");
+Console.WriteLine("Add_Migration AddEmailToStudent");
 Console.WriteLine("Up() method uses AddColumn operation (not CreateTable)");
 Console.WriteLine("This matters because ADD COLUMN preserves existing rows");
 Console.WriteLine("CreateTable would require the table not to exist");
-Console.WriteLine("Update-Database adds Email column");
+Console.WriteLine("Update_Database adds Email column");
 Console.WriteLine("Seeded 4 students still present in SSMS");
 Console.WriteLine();
 
@@ -296,7 +312,6 @@ public static class StudentExtensions
         return students.Where(s => s.Gpa > 3.0);
     }
 }
-
 
 
 
