@@ -8,34 +8,56 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
+const double GPAThreshold = 3.4;
 
-List<Student> students = new List<Student>{
-    new Student("Yara Adel", 2, 3.5),
-    new Student("Omar Hesham", 3, 2.8),
-    new Student("Nada Samir", 1, 3.9),
-    new Student("Kareem Fouad", 4, 3.2)
+List<Student> students = new(){
+    new Student { FullName = "Yara Adel", YearOfStudy = 2, Gpa = 3.5 },
+    new Student { FullName = "Omar Hesham", YearOfStudy = 3, Gpa = 2.8 },
+    new Student { FullName = "Nada Samir", YearOfStudy = 1, Gpa = 3.9 },
+    new Student { FullName = "Kareem Fouad", YearOfStudy = 4, Gpa = 3.2 }
 };
 
-List<Instructor> instructors = new List<Instructor>
+
+List<Instructor> instructors = new(){
+    new Instructor
+    {
+        FullName = "Hamdy",
+        YearsOfExperience = 10,
+        AssignedCourseName = "Web Development Using .NET"
+    },
+     new Instructor
+    {
+        FullName = "Mona Khalil",
+        YearsOfExperience = 6,
+        AssignedCourseName = "Database Fundamentals"
+    }
+};
+
+List<Course> courses = new()
 {
-    new Instructor("Hamdy", 10, "Web Development Using .NET"),
-    new Instructor("Mona Khalil", 6, "Database Fundamentals" )
+    new Course
+    {
+        CourseName = "Web Development Using .NET",
+        Credits = 4
+    },
+    new Course
+    {
+        CourseName = "Database Fundamentals",
+        Credits = 3
+    }
 };
 
-List<Course> courses = new List<Course>
-{
-    new Course("Web Development Using .NET", 4),
-    new Course("Database Fundamentals", 3)
-};
+
 
 Console.WriteLine($"Total Count: {students.Count()}");
-Console.WriteLine($"Above GPA Threshold : {students.Count(s => s.GPA >= GPAThreshold) }");
+Console.WriteLine($"Above GPA Threshold: {students.Count(s => s.Gpa >= GPAThreshold)}");
 Console.WriteLine($"Average GPA: {students.Average(s => s.Gpa):F2}");  
 Console.WriteLine($"Highest GPA: {students.Max(s => s.Gpa):F2}");  
 Console.WriteLine($"Lowest GPA: {students.Min(s => s.Gpa):F2}");  
 Console.WriteLine($"Any Below 2.0 ? : {students.Any(s => s.Gpa < 2.0)}"); 
-Console.WriteLine($"All at or above 2.0: {students.All(s => s.GPA >= 2.0)}");
+Console.WriteLine($"All at or above 2.0: {students.All(s => s.Gpa >= 2.0)}");
 
 
 //var noStudents = new list<Student>();
@@ -44,9 +66,9 @@ Console.WriteLine($"All at or above 2.0: {students.All(s => s.GPA >= 2.0)}");
 //Console.WriteLine($"Average of Empty List : {noStudents.Average(s => s.Gpa):F2}");
 
 
-var noStudents = new list<Student>();
+var noStudents = new List<Student>();
 if(noStudents.Any())
-Console.WriteLine("Average : {noStudents.Average(s => s.GPA): F2}");
+Console.WriteLine("Average : {noStudents.Average(s => s.Gpa): F2}");
 else
 Console.WriteLine($"No Students to Calculate Average");
 
@@ -55,18 +77,22 @@ Console.WriteLine($"No Students to Calculate Average");
 
 var GroupedByYear = students.GroupBy(s => s.YearOfStudy);
 foreach(var group in GroupedByYear){
-    Console.WriteLine($"{group.Key} ({group.Count()} students) : {string.Join(group.Select(s => s.FullName))}"); 
+    Console.WriteLine($"{group.Key} ({group.Count()} students) : {string.Join(", ", group.Select(s => s.FullName))}"); 
 }
 
-var GroupedByTask = students.GroupBy(s => s.Task);
-foreach(var group in GroupedByTask){
-    Console.WriteLine($"{group.Key} ({group.Count()} students) : {string.Join(group.Select(s => s.full))}");
+var groupedByCategory = students.GroupBy(s => s.Gpa >= GPAThreshold ? "Excellent" : "Developing");
+
+foreach (var group in groupedByCategory){
+    Console.WriteLine($"{group.Key} ({group.Count()} students): {string.Join(", ", group.Select(s => s.FullName))}");
 }
 
 //Added OrderBy(g => g.Key) to sort the groups by year
-var sortedGroupedByYear = students.GroupBy(s => s.YearOfStudy).OrderBy(g => g.Key);
-foreach (var group in sortedGroupedByYear){
-    Console.WriteLine($"  Year {group.Key} ({group.Count()} students): {string.Join(group.Select(s => s.FullName))}");
+var sortedGroups = students
+    .GroupBy(s => s.YearOfStudy)
+    .OrderBy(g => g.Key);
+
+foreach (var group in sortedGroups){
+    Console.WriteLine($"Year {group.Key}: {string.Join(", ", group.Select(s => s.FullName))}");
 }
 
 
@@ -81,14 +107,23 @@ var joinedMethod = instructors.Join(
     }
 
 
-    var joinedQuery = (from inst in Instructors
-    join c in courses on inst.AssignedCourseName equals c.CourseName
-    select new{Instructor = inst.FullName, Course = c.CourseName, Credits = course.Credits})
-    .ToList();
-    foreach(var result in joinedQuery){
-        Console.WriteLine($"{result.Instructor} teaches {result.Course} ({result.Credits} credits)");
+   var joinedQuery =(
+    from inst in instructors
+    join c in courses
+        on inst.AssignedCourseName equals c.CourseName
+    select new
+    {
+        Instructor = inst.FullName,
+        Course = c.CourseName,
+        Credits = c.Credits
     }
+)
+.ToList();
 
+foreach (var result in joinedQuery)
+{
+    Console.WriteLine($"{result.Instructor} teaches {result.Course} ({result.Credits} credits)");
+}
 
     var myInstructor = new Instructor{
         FullName = "Hager Fathy",  // Using real name
@@ -114,14 +149,20 @@ var joinedMethod = instructors.Join(
 //DefaultIfEmpty() or or an Outer Join
 
 // Prediction 3 _ Correct
-var TopStudent = students.Where(s => s.GPA >= 3.0);
-students.Add(new Student { FullName = "Layla Mostafa", YearOfStudy = 2, Gpa = 3.7});
+var TopStudent = students.Where(s => s.Gpa >= 3.0);
+
+var layla = new Student{
+    FullName = "Layla Mostafa",
+    YearOfStudy = 2,
+    Gpa = 3.7
+};
+
+students.Add(layla);
+
 Console.WriteLine($"Count: {TopStudent.Count()}");
 
-if(Layla!= null){
-    Student.Remove(Layla);
-    Console.WriteLine();
-}
+students.Remove(layla);
+Console.WriteLine();
 
 
 var TopStudentsDeferred = students.Where(s => s.Gpa > 3.0);
@@ -238,7 +279,24 @@ public class StudentPortalContext : DbContext{
     public DbSet<Course> Courses { get; set; }
     public DbSet<Instructor> Instructors { get; set; }
 
+     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseSqlite("Data Source=StudentPortal.db")
+            .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information)
+            .EnableSensitiveDataLogging();
+    }
 }
+
+public static class StudentExtensions
+{
+    public static IEnumerable<Student> MyTopStudents(this IEnumerable<Student> students)
+    {
+        return students.Where(s => s.Gpa > 3.0);
+    }
+}
+
+
+
 
 
 
