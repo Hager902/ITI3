@@ -1,305 +1,267 @@
 ﻿// Hager Fathy Mahmoud Ahmed;
-
-//B1 Average on empty collection throws InvalidOperationException
-//B2 insertion order not sorted
-//B3 3
-
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
+//B1 3.99
+//B2 0 because lazy loading is disabled
+//B3 Nothing changes in the database. The code appears to work but the database remains unchanged
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
-const double GPAThreshold = 3.4;
+const double MyGpa = 3.1;
 
-List<Student> students = new(){
-    new Student { FullName = "Yara Adel", YearOfStudy = 2, Gpa = 3.5 },
-    new Student { FullName = "Omar Hesham", YearOfStudy = 3, Gpa = 2.8 },
-    new Student { FullName = "Nada Samir", YearOfStudy = 1, Gpa = 3.9 },
-    new Student { FullName = "Kareem Fouad", YearOfStudy = 4, Gpa = 3.2 }
-};
+using var context = new StudentPortalContext();
+
+await context.Database.MigrateAsync();
 
 
-List<Instructor> instructors = new(){
-    new Instructor
+var nada = await context.Students
+    .FirstOrDefaultAsync(s => s.FullName == "Nada Samir");
+
+if (nada == null)cd ~/course1/ConsoleApp1{
+    nada = new Student
     {
-        FullName = "Hamdy",
-        YearsOfExperience = 10,
-        AssignedCourseName = "Web Development Using .NET"
-    },
-     new Instructor
-    {
-        FullName = "Mona Khalil",
-        YearsOfExperience = 6,
-        AssignedCourseName = "Database Fundamentals"
-    }
-};
-
-List<Course> courses = new()
-{
-    new Course
-    {
-        CourseName = "Web Development Using .NET",
-        Credits = 4
-    },
-    new Course
-    {
-        CourseName = "Database Fundamentals",
-        Credits = 3
-    }
-};
-
-
-
-Console.WriteLine($"Total Count: {students.Count()}");
-Console.WriteLine($"Above GPA Threshold: {students.Count(s => s.Gpa >= GPAThreshold)}");
-Console.WriteLine($"Average GPA: {students.Average(s => s.Gpa):F2}");  
-Console.WriteLine($"Highest GPA: {students.Max(s => s.Gpa):F2}");  
-Console.WriteLine($"Lowest GPA: {students.Min(s => s.Gpa):F2}");  
-Console.WriteLine($"Any Below 2.0 ? : {students.Any(s => s.Gpa < 2.0)}"); 
-Console.WriteLine($"All at or above 2.0: {students.All(s => s.Gpa >= 2.0)}");
-
-
-//var noStudents = new list<Student>();
-//Console.WriteLine($"Total Count : {noStudents.Count()}");
-//Console.WriteLine($"Any Students ? : {noStudents.Any()}");
-//Console.WriteLine($"Average of Empty List : {noStudents.Average(s => s.Gpa):F2}");
-
-
-var noStudents = new List<Student>();
-if(noStudents.Any())
-Console.WriteLine("Average : {noStudents.Average(s => s.Gpa): F2}");
-else
-Console.WriteLine($"No Students to Calculate Average");
-
-
-//Groups are not sorted, GroupBy makes the order groups are first encountered in the source sequence
-
-var GroupedByYear = students.GroupBy(s => s.YearOfStudy);
-foreach(var group in GroupedByYear){
-    Console.WriteLine($"{group.Key} ({group.Count()} students) : {string.Join(", ", group.Select(s => s.FullName))}"); 
-}
-
-var groupedByCategory = students.GroupBy(s => s.Gpa >= GPAThreshold ? "Excellent" : "Developing");
-
-foreach (var group in groupedByCategory){
-    Console.WriteLine($"{group.Key} ({group.Count()} students): {string.Join(", ", group.Select(s => s.FullName))}");
-}
-
-//Added OrderBy(g => g.Key) to sort the groups by year
-var sortedGroups = students
-    .GroupBy(s => s.YearOfStudy)
-    .OrderBy(g => g.Key);
-
-foreach (var group in sortedGroups){
-    Console.WriteLine($"Year {group.Key}: {string.Join(", ", group.Select(s => s.FullName))}");
-}
-
-
-var joinedMethod = instructors.Join(
-    courses,
-    inst => inst.AssignedCourseName,
-    c => c.CourseName,
-    (inst, c) => new { Instructor = inst.FullName, Course = c.CourseName, Credits = c.Credits })
-    .ToList();
-    foreach(var result in joinedMethod){
-        Console.WriteLine($"{result.Instructor} teaches {result.Course} ({result.Credits} credits)");
-    }
-
-
-   var joinedQuery =(
-    from inst in instructors
-    join c in courses
-        on inst.AssignedCourseName equals c.CourseName
-    select new
-    {
-        Instructor = inst.FullName,
-        Course = c.CourseName,
-        Credits = c.Credits
-    }
-)
-.ToList();
-
-foreach (var result in joinedQuery)
-{
-    Console.WriteLine($"{result.Instructor} teaches {result.Course} ({result.Credits} credits)");
-}
-
-    var myInstructor = new Instructor{
-        FullName = "Hager Fathy",  // Using real name
-        YearsOfExperience = 3,
-        AssignedCourseName = "Machine Learning"
+        FullName = "Nada Samir",
+        YearOfStudy = 1,
+        Gpa = 3.9
     };
 
-    instructors.Add(myInstructor);
+    context.Students.Add(nada);
 
-    Console.WriteLine($"Instructors Count IN: {instructors.Count}");
-    var joinWithMe = instructors.Join(
-        courses,
-        inst => inst.AssignedCourseName,
-        c => c.CourseName,
-        (inst, c) => new{Instructor = inst.FullName, Course = c.CourseName,Credits = c.Credits })
-        .ToList();
-        Console.WriteLine($"Join Rows OUT: {joinWithMe.Count}");
-        instructors.Remove(myInstructor); 
-        Console.WriteLine();
+    await context.SaveChangesAsync();
+}
 
-//Inner join silently drops non-matching rows "Hager Fathy" assigned to "Machine Learning" doesn't match any course so the row is excluded from results
-//I would need a Left Outer Join 
-//DefaultIfEmpty() or or an Outer Join
+   //Difference is that EF tracks in memory but hasn't sent to database
 
-// Prediction 3 _ Correct
-var TopStudent = students.Where(s => s.Gpa >= 3.0);
+   nada.Gpa = MyGpa; 
+   await context.SaveChangesAsync();
+   Console.WriteLine($"SSMS value: {nada.Gpa}");
 
-var layla = new Student{
-    FullName = "Layla Mostafa",
+   //EF knew to update only Gpa by changing tracking
+
+   var newStudent = new Student{
+    FullName = "Hager Fathy",
     YearOfStudy = 2,
-    Gpa = 3.7
-};
-
-students.Add(layla);
-
-Console.WriteLine($"Count: {TopStudent.Count()}");
-
-students.Remove(layla);
-Console.WriteLine();
-
-
-var TopStudentsDeferred = students.Where(s => s.Gpa > 3.0);
-Console.WriteLine($"Count: {TopStudentsDeferred.Count()}"); 
-foreach (var st in TopStudentsDeferred) { 
-
-    Console.WriteLine($"{st.FullName}");
-}
-
-var avg1 = TopStudentsDeferred.Average(s => s.Gpa);  
-Console.WriteLine($"Average: {avg1:F2}");
-
-//Filtering runs 3 times
-
-var TopStudentsImmediate = students.Where(s => s.Gpa > 3.0).ToList();  // Filter runs once
-Console.WriteLine($"  Count: {TopStudentsImmediate.Count}");  // Use .Count property (not method)
-foreach (var st in TopStudentsImmediate)  {
-    Console.WriteLine($"{st.FullName}");
-}
-
-var avg2 = TopStudentsImmediate.Average(s => s.Gpa); 
-Console.WriteLine($"Average: {avg2:F2}");
-
-//Added .ToList() to force immediate execution, it becomes important in Part H when querying a database
-
-
-var myTopNames = students
-    .MyTopStudents()
-    .OrderBy(s => s.FullName)
-    .Select(s => s.FullName)
-    .ToList();
-foreach (var name in myTopNames)
-{
-    Console.WriteLine($"{name}");
-}
-
-//It's DEFERRED,  because Deferred execution means you filter IN SQL which is fast and efficient
-
-
-Console.WriteLine("Step 1: Add Migration InitialCreate");
-Console.WriteLine("Step 2: Read migration file");
-Console.WriteLine("Step 3: Update Database");
-Console.WriteLine("Step 4: Verify in SSMS");
-Console.WriteLine();
-
-
-
-using (var context = new StudentPortalContext())
-{
-   
-    if (!context.Students.Any()){
+    Gpa = 3.1
+    };
     
-        Console.WriteLine("Seeding database:");
-        context.AddRange(students);
-        context.SaveChanges();
-        Console.WriteLine("Students seeded successfully");
-    }
-    else
-    {
-        Console.WriteLine("Database already seeded");
-    }
+    Console.WriteLine($"Id before save: {newStudent.Id}");
+    context.Students.Add(newStudent);
+    await context.SaveChangesAsync();
+    Console.WriteLine($"Id after save: {newStudent.Id}");
 
-    Console.WriteLine("Warm up chain against DATABASE:");
-    var dbTopNames = context.Students
-        .Where(s => s.Gpa > 3.0) 
-        .OrderByDescending(s => s.Gpa) 
-        .Select(s => s.FullName)  
-        .ToList();  
-    foreach (var name in dbTopNames)
-    {
-        Console.WriteLine($"{name}");
-    }
-
+    newStudent.YearOfStudy = 3;
+    await context.SaveChangesAsync();
+    Console.WriteLine($"Updated Year is now 3");
    
-    Console.WriteLine("Database Aggregates:");
-    var avgGPA = context.Students.Average(s => s.Gpa);
-    var totalCount = context.Students.Count();
-    Console.WriteLine($"Average GPA: {avgGPA:F2}");
-    Console.WriteLine($"Total students: {totalCount}");
+
+    var DeleteID = newStudent.Id;
+    context.Students.Remove(newStudent);
+    await context.SaveChangesAsync();
+    Console.WriteLine($"Deleted student id {DeleteID}");
+    Console.WriteLine();
+
+   // Remove() has no async because it only changes tracking state not database
+
+try{
+    var Student1 = new Student{
+          FullName = null,
+          YearOfStudy = 1,
+          Gpa = 3.0
+    };
+    context.Students.Add(Student1);
+    await context.SaveChangesAsync();
 }
 
-//context.Students.Where(s => s.Gpa > 3.0).ToList(), Filtering happens in SQL
-//context.Students.ToList().Where(s => s.Gpa > 3.0), Filtering happens in C#
-//Used the first approach
+  catch (DbUpdateException ex){
+    Console.WriteLine(ex.GetType().Name);
+}
+// Up() uses AlterColumn() to change the FullName column
+// nullable was changed from true to false, this means the column no longer accepts null values
+// The migration could fail if FullName is null or if its length exceeds 100 characters
+//
+// The exception type was DbUpdateException
 
 
-public class Student{
+var hamdy = await context.Instructors.FirstAsync(i => i.FullName == "Hamdy");
 
+if (hamdy != null){
+    var webCourse = await context.Courses.FirstAsync(c =>c.CourseName == "Web Development Using .NET");
+
+    if (webCourse != null){
+        webCourse.InstructorId = hamdy.Id;
+        await context.SaveChangesAsync();
+        Console.WriteLine("Course successfully assigned.");
+    }
+}
+try
+{
+    var invalidCourse = new Course{
+        CourseName = "Algorithms",
+        Credits = 3,
+        InstructorId = 9999
+    };
+
+    context.Courses.Add(invalidCourse);
+    await context.SaveChangesAsync();
+}
+catch (Exception ex){
+    Console.WriteLine(ex.Message);
+}
+
+
+
+// Keeping both AssignedCourseName and InstructorId would result in duplicated data
+// The migration added a new column, created an index, created a foreign key and removed the old column
+// Removing AssignedCourseName causes the data stored in that column to be lost
+// In a real project the existing data would be moved into the new column before deleting the old one
+// AssignedCourseName was just a text value so invalid values could be stored without any errors
+
+
+hamdy = await context.Instructors.FirstAsync(i => i.FullName == "Hamdy");
+
+if (hamdy != null){
+    var ExtraCourses = new List<Course>{
+        new Course{
+            CourseName = "Course One",
+            Credits = 3,
+            InstructorId = hamdy.Id
+        },
+
+        new Course{
+            CourseName = "Course Two",
+            Credits = 4,
+            InstructorId = hamdy.Id
+        }
+    };
+
+    context.Courses.AddRange(ExtraCourses);
+    await context.SaveChangesAsync();
+}
+
+// I added two courses 
+// SQL returned multiple rows because each instructor was associated with one or more courses,EF Core combined the duplicated data into a single object
+// Nothing changed because the entities were loaded by using AsNoTracking
+
+
+
+
+var allInstructors = await context.Instructors.ToListAsync();
+
+foreach (var instructor in allInstructors){
+    Console.WriteLine(instructor.FullName);
+    Console.WriteLine(instructor.Courses.Count);
+}
+
+allInstructors = await context.Instructors
+    .Include(i => i.Courses)
+    .ToListAsync();
+
+foreach (var instructor in allInstructors){
+    Console.WriteLine(instructor.FullName);
+
+    foreach (var course in instructor.Courses){
+        Console.WriteLine(course.CourseName);
+    }
+}
+
+var oneInstructor = await context.Instructors.FirstAsync();
+Console.WriteLine(oneInstructor.Courses.Count);
+
+await context.Entry(oneInstructor)
+    .Collection(i => i.Courses)
+    .LoadAsync();
+
+Console.WriteLine(oneInstructor.Courses.Count);
+
+var AllStudents = await context.Students
+    .AsNoTracking()
+    .ToListAsync();
+
+AllStudents[0].Gpa = 4.0;
+
+await context.SaveChangesAsync();
+
+
+    public class Student{
     public int Id { get; set; }
-    public string FullName { get; set; }
+
+    [Required]
+    [MaxLength(100)]
+    public string? FullName { get; set; }
+
     public int YearOfStudy { get; set; }
+
     public double Gpa { get; set; }
-    public string? Email { get; set; }  
+
+    public string? Email { get; set; }
 }
 
 public class Instructor{
+    public int? Id { get; set; }
 
-    public int Id { get; set; }
-    public string FullName { get; set; } 
+    public string FullName { get; set; }
+
     public int YearsOfExperience { get; set; }
-    public string? AssignedCourseName { get; set; }
+
+    public List<Course> Courses { get; set; } = new();
 }
 
 public class Course{
-
     public int Id { get; set; }
+
+    [Required]
+    [MaxLength(150)]
     public string CourseName { get; set; }
+
     public int Credits { get; set; }
+
+    public int? InstructorId { get; set; }
+
+    public Instructor? Instructor { get; set; }
 }
 
-public class StudentPortalContext : DbContext{
 
-    public DbSet<Student> Students { get; set; }
-    public DbSet<Course> Courses { get; set; }
-    public DbSet<Instructor> Instructors { get; set; }
+public class StudentPortalContext : DbContext
+{
+    public DbSet<Student> Students => Set<Student>();
 
-     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    public DbSet<Course> Courses => Set<Course>();
+
+    public DbSet<Instructor> Instructors => Set<Instructor>();
+
+    protected override void OnConfiguring(
+        DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlite("Data Source=StudentPortal.db")
-            .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information)
+        optionsBuilder
+            .UseSqlite("Data Source=StudentPortal.db")
+            .LogTo(Console.WriteLine)
             .EnableSensitiveDataLogging();
     }
+
+
+protected override void OnModelCreating(ModelBuilder modelBuilder){
+    modelBuilder.Entity<Student>()
+    .Property(s => s.FullName)
+    .IsRequired()
+    .HasMaxLength(100);
+// Up() uses AlterColumn() to change the FullName column
+// nullable was changed from true to false, this means the column no longer accepts null values
+// The migration could fail if FullName is null or if its length exceeds 100 characters
+// The exception type was DbUpdateException
+
+
+    modelBuilder.Entity<Course>()
+        .HasOne(c => c.Instructor)
+        .WithMany(i => i.Courses)
+        .HasForeignKey(c => c.InstructorId)
+        .OnDelete(DeleteBehavior.SetNull);
+    
+}
 }
 
-public static class StudentExtensions
-{
-    public static IEnumerable<Student> MyTopStudents(this IEnumerable<Student> students)
-    {
-        return students.Where(s => s.Gpa > 3.0);
-    }
-}
 
 
-
-
-
-
-
-   
- 
+//Lab ID = 15
+//3.0 + ((15 % 7) * 0.1) = 3.1
+//15 % 2 = 1
+//(15 % 3) + 2 = 2
+//No rollback was needed if a rollback had been needed i would have used : Update-Database <MigrationName> , Remove-Migration
+//Multiple enumeration and the N + 1 problem are similar because both repeatedly execute queries instead of executing them only once.
