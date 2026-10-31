@@ -1,7 +1,5 @@
 ﻿// Hager Fathy Mahmoud Ahmed;
-//B1 3.99
-//B2 0 because lazy loading is disabled
-//B3 Nothing changes in the database. The code appears to work but the database remains unchanged
+
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,13 +26,11 @@ if (nada == null)cd ~/course1/ConsoleApp1{
     await context.SaveChangesAsync();
 }
 
-   //Difference is that EF tracks in memory but hasn't sent to database
 
    nada.Gpa = MyGpa; 
    await context.SaveChangesAsync();
    Console.WriteLine($"SSMS value: {nada.Gpa}");
 
-   //EF knew to update only Gpa by changing tracking
 
    var newStudent = new Student{
     FullName = "Hager Fathy",
@@ -58,7 +54,7 @@ if (nada == null)cd ~/course1/ConsoleApp1{
     Console.WriteLine($"Deleted student id {DeleteID}");
     Console.WriteLine();
 
-   // Remove() has no async because it only changes tracking state not database
+ 
 
 try{
     var Student1 = new Student{
@@ -73,11 +69,6 @@ try{
   catch (DbUpdateException ex){
     Console.WriteLine(ex.GetType().Name);
 }
-// Up() uses AlterColumn() to change the FullName column
-// nullable was changed from true to false, this means the column no longer accepts null values
-// The migration could fail if FullName is null or if its length exceeds 100 characters
-//
-// The exception type was DbUpdateException
 
 
 var hamdy = await context.Instructors.FirstAsync(i => i.FullName == "Hamdy");
@@ -107,14 +98,6 @@ catch (Exception ex){
 }
 
 
-
-// Keeping both AssignedCourseName and InstructorId would result in duplicated data
-// The migration added a new column, created an index, created a foreign key and removed the old column
-// Removing AssignedCourseName causes the data stored in that column to be lost
-// In a real project the existing data would be moved into the new column before deleting the old one
-// AssignedCourseName was just a text value so invalid values could be stored without any errors
-
-
 hamdy = await context.Instructors.FirstAsync(i => i.FullName == "Hamdy");
 
 if (hamdy != null){
@@ -135,11 +118,6 @@ if (hamdy != null){
     context.Courses.AddRange(ExtraCourses);
     await context.SaveChangesAsync();
 }
-
-// I added two courses 
-// SQL returned multiple rows because each instructor was associated with one or more courses,EF Core combined the duplicated data into a single object
-// Nothing changed because the entities were loaded by using AsNoTracking
-
 
 
 
@@ -242,10 +220,6 @@ protected override void OnModelCreating(ModelBuilder modelBuilder){
     .Property(s => s.FullName)
     .IsRequired()
     .HasMaxLength(100);
-// Up() uses AlterColumn() to change the FullName column
-// nullable was changed from true to false, this means the column no longer accepts null values
-// The migration could fail if FullName is null or if its length exceeds 100 characters
-// The exception type was DbUpdateException
 
 
     modelBuilder.Entity<Course>()
@@ -258,10 +232,3 @@ protected override void OnModelCreating(ModelBuilder modelBuilder){
 }
 
 
-
-//Lab ID = 15
-//3.0 + ((15 % 7) * 0.1) = 3.1
-//15 % 2 = 1
-//(15 % 3) + 2 = 2
-//No rollback was needed if a rollback had been needed i would have used : Update-Database <MigrationName> , Remove-Migration
-//Multiple enumeration and the N + 1 problem are similar because both repeatedly execute queries instead of executing them only once.
